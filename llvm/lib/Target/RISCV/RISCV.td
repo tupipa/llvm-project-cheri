@@ -68,6 +68,8 @@ def IsRV32E : Predicate<"Subtarget->isRV32E()">,
 def FeatureCheri
     : SubtargetFeature<"xcheri", "HasCheri", "true",
                        "Implements CHERI extension">;
+def HasCheri : Predicate<"Subtarget->hasCheri()">,
+                         AssemblerPredicate<"FeatureCheri">;
 
 def FeatureRelax
     : SubtargetFeature<"relax", "EnableLinkerRelax", "true",
