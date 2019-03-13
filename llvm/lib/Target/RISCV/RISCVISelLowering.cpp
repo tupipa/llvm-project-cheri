@@ -55,9 +55,15 @@ RISCVTargetLowering::RISCVTargetLowering(const TargetMachine &TM,
   case RISCVABI::ABI_ILP32:
   case RISCVABI::ABI_ILP32F:
   case RISCVABI::ABI_ILP32D:
+  case RISCVABI::ABI_IL32PC64:
+  case RISCVABI::ABI_IL32PC64F:
+  case RISCVABI::ABI_IL32PC64D:
   case RISCVABI::ABI_LP64:
   case RISCVABI::ABI_LP64F:
   case RISCVABI::ABI_LP64D:
+  case RISCVABI::ABI_L64PC128:
+  case RISCVABI::ABI_L64PC128F:
+  case RISCVABI::ABI_L64PC128D:
     break;
   }
 
@@ -1133,6 +1139,11 @@ static const MCPhysReg ArgFPR64s[] = {
   RISCV::F14_64, RISCV::F15_64, RISCV::F16_64, RISCV::F17_64
 };
 
+static const MCPhysReg ArgGPCRs[] = {
+  RISCV::C10, RISCV::C11, RISCV::C12, RISCV::C13,
+  RISCV::C14, RISCV::C15, RISCV::C16, RISCV::C17
+};
+
 // Pass a 2*XLEN argument that has been split into two XLEN values through
 // registers or the stack as necessary.
 static bool CC_RISCVAssign2XLen(unsigned XLen, CCState &State, CCValAssign VA1,
@@ -1172,13 +1183,15 @@ static bool CC_RISCVAssign2XLen(unsigned XLen, CCState &State, CCValAssign VA1,
 }
 
 // Implements the RISC-V calling convention. Returns true upon failure.
-static bool CC_RISCV(const DataLayout &DL, RISCVABI::ABI ABI, unsigned ValNo,
-                     MVT ValVT, MVT LocVT, CCValAssign::LocInfo LocInfo,
-                     ISD::ArgFlagsTy ArgFlags, CCState &State, bool IsFixed,
-                     bool IsRet, Type *OrigTy) {
+static bool CC_RISCV(const DataLayout &DL, unsigned ValNo, MVT ValVT, MVT LocVT,
+                     CCValAssign::LocInfo LocInfo, ISD::ArgFlagsTy ArgFlags,
+                     CCState &State, bool IsFixed, bool IsRet, Type *OrigTy,
+                     const RISCVSubtarget &Subtarget) {
+  RISCVABI::ABI ABI = Subtarget.getTargetABI();
   unsigned XLen = DL.getLargestLegalIntTypeSizeInBits();
   assert(XLen == 32 || XLen == 64);
   MVT XLenVT = XLen == 32 ? MVT::i32 : MVT::i64;
+  MVT CLenVT = Subtarget.typeForCapabilities();
 
   // Any return value split in to more than two values can't be returned
   // directly.
@@ -1197,13 +1210,19 @@ static bool CC_RISCV(const DataLayout &DL, RISCVABI::ABI ABI, unsigned ValNo,
     llvm_unreachable("Unexpected ABI");
   case RISCVABI::ABI_ILP32:
   case RISCVABI::ABI_LP64:
+  case RISCVABI::ABI_IL32PC64:
+  case RISCVABI::ABI_L64PC128:
     break;
   case RISCVABI::ABI_ILP32F:
   case RISCVABI::ABI_LP64F:
+  case RISCVABI::ABI_IL32PC64F:
+  case RISCVABI::ABI_L64PC128F:
     UseGPRForF32 = !IsFixed;
     break;
   case RISCVABI::ABI_ILP32D:
   case RISCVABI::ABI_LP64D:
+  case RISCVABI::ABI_IL32PC64D:
+  case RISCVABI::ABI_L64PC128D:
     UseGPRForF32 = !IsFixed;
     UseGPRForF64 = !IsFixed;
     break;
@@ -1232,6 +1251,7 @@ static bool CC_RISCV(const DataLayout &DL, RISCVABI::ABI ABI, unsigned ValNo,
   // legalisation or not. The argument will not be passed by registers if the
   // original type is larger than 2*XLEN, so the register alignment rule does
   // not apply.
+  // TODO: Pure capability varargs
   unsigned TwoXLenInBytes = (2 * XLen) / 8;
   if (!IsFixed && ArgFlags.getOrigAlign() == TwoXLenInBytes &&
       DL.getTypeAllocSize(OrigTy) == TwoXLenInBytes) {
@@ -1300,13 +1320,17 @@ static bool CC_RISCV(const DataLayout &DL, RISCVABI::ABI ABI, unsigned ValNo,
 
   // Allocate to a register if possible, or else a stack slot.
   unsigned Reg;
+  unsigned ArgBytes = XLen / 8;
   if (ValVT == MVT::f32 && !UseGPRForF32)
     Reg = State.AllocateReg(ArgFPR32s, ArgFPR64s);
   else if (ValVT == MVT::f64 && !UseGPRForF64)
     Reg = State.AllocateReg(ArgFPR64s, ArgFPR32s);
-  else
+  else if (ValVT == CLenVT) {
+    Reg = State.AllocateReg(ArgGPCRs);
+    ArgBytes = DL.getPointerSize(200);
+  } else
     Reg = State.AllocateReg(ArgGPRs);
-  unsigned StackOffset = Reg ? 0 : State.AllocateStack(XLen / 8, XLen / 8);
+  unsigned StackOffset = Reg ? 0 : State.AllocateStack(ArgBytes, ArgBytes);
 
   // If we reach this point and PendingLocs is non-empty, we must be at the
   // end of a split argument that must be passed indirectly.
@@ -1326,8 +1350,8 @@ static bool CC_RISCV(const DataLayout &DL, RISCVABI::ABI ABI, unsigned ValNo,
     return false;
   }
 
-  assert((!UseGPRForF32 || !UseGPRForF64 || LocVT == XLenVT) &&
-         "Expected an XLenVT at this stage");
+  assert((!UseGPRForF32 || !UseGPRForF64 || LocVT == XLenVT || LocVT == CLenVT) &&
+         "Expected an XLenVT or CLenVT at this stage");
 
   if (Reg) {
     State.addLoc(CCValAssign::getReg(ValNo, ValVT, Reg, LocVT, LocInfo));
@@ -1359,9 +1383,8 @@ void RISCVTargetLowering::analyzeInputArgs(
     else if (Ins[i].isOrigArg())
       ArgTy = FType->getParamType(Ins[i].getOrigArgIndex());
 
-    RISCVABI::ABI ABI = MF.getSubtarget<RISCVSubtarget>().getTargetABI();
-    if (CC_RISCV(MF.getDataLayout(), ABI, i, ArgVT, ArgVT, CCValAssign::Full,
-                 ArgFlags, CCInfo, /*IsRet=*/true, IsRet, ArgTy)) {
+    if (CC_RISCV(MF.getDataLayout(), i, ArgVT, ArgVT, CCValAssign::Full,
+                 ArgFlags, CCInfo, /*IsRet=*/true, IsRet, ArgTy, Subtarget)) {
       LLVM_DEBUG(dbgs() << "InputArg #" << i << " has unhandled type "
                         << EVT(ArgVT).getEVTString() << '\n');
       llvm_unreachable(nullptr);
@@ -1380,9 +1403,8 @@ void RISCVTargetLowering::analyzeOutputArgs(
     ISD::ArgFlagsTy ArgFlags = Outs[i].Flags;
     Type *OrigTy = CLI ? CLI->getArgs()[Outs[i].OrigArgIndex].Ty : nullptr;
 
-    RISCVABI::ABI ABI = MF.getSubtarget<RISCVSubtarget>().getTargetABI();
-    if (CC_RISCV(MF.getDataLayout(), ABI, i, ArgVT, ArgVT, CCValAssign::Full,
-                 ArgFlags, CCInfo, Outs[i].IsFixed, IsRet, OrigTy)) {
+    if (CC_RISCV(MF.getDataLayout(), i, ArgVT, ArgVT, CCValAssign::Full,
+                 ArgFlags, CCInfo, Outs[i].IsFixed, IsRet, OrigTy, Subtarget)) {
       LLVM_DEBUG(dbgs() << "OutputArg #" << i << " has unhandled type "
                         << EVT(ArgVT).getEVTString() << "\n");
       llvm_unreachable(nullptr);
@@ -1420,20 +1442,23 @@ static SDValue unpackFromRegLoc(SelectionDAG &DAG, SDValue Chain,
   SDValue Val;
   const TargetRegisterClass *RC;
 
-  switch (LocVT.getSimpleVT().SimpleTy) {
-  default:
-    llvm_unreachable("Unexpected register type");
-  case MVT::i32:
-  case MVT::i64:
-    RC = &RISCV::GPRRegClass;
-    break;
-  case MVT::f32:
-    RC = &RISCV::FPR32RegClass;
-    break;
-  case MVT::f64:
-    RC = &RISCV::FPR64RegClass;
-    break;
-  }
+  if (LocVT.isFatPointer())
+    RC = &RISCV::GPCRRegClass;
+  else
+    switch (LocVT.getSimpleVT().SimpleTy) {
+    default:
+      llvm_unreachable("Unexpected register type");
+    case MVT::i32:
+    case MVT::i64:
+      RC = &RISCV::GPRRegClass;
+      break;
+    case MVT::f32:
+      RC = &RISCV::FPR32RegClass;
+      break;
+    case MVT::f64:
+      RC = &RISCV::FPR64RegClass;
+      break;
+    }
 
   unsigned VReg = RegInfo.createVirtualRegister(RC);
   RegInfo.addLiveIn(VA.getLocReg(), VReg);
@@ -2016,9 +2041,8 @@ bool RISCVTargetLowering::CanLowerReturn(
   for (unsigned i = 0, e = Outs.size(); i != e; ++i) {
     MVT VT = Outs[i].VT;
     ISD::ArgFlagsTy ArgFlags = Outs[i].Flags;
-    RISCVABI::ABI ABI = MF.getSubtarget<RISCVSubtarget>().getTargetABI();
-    if (CC_RISCV(MF.getDataLayout(), ABI, i, VT, VT, CCValAssign::Full,
-                 ArgFlags, CCInfo, /*IsFixed=*/true, /*IsRet=*/true, nullptr))
+    if (CC_RISCV(MF.getDataLayout(), i, VT, VT, CCValAssign::Full, ArgFlags,
+                 CCInfo, /*IsFixed=*/true, /*IsRet=*/true, nullptr, Subtarget))
       return false;
   }
   return true;
