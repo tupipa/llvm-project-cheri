@@ -51,7 +51,13 @@ enum NodeType : unsigned {
   FMV_X_ANYEXTW_RV64,
   // READ_CYCLE_WIDE - A read of the 64-bit cycle CSR on a 32-bit target
   // (returns (Lo, Hi)). It takes a chain operand.
-  READ_CYCLE_WIDE
+  READ_CYCLE_WIDE,
+  /// Legalised int_cheri_cap_tag_get
+  CAP_TAG_GET,
+  /// Legalised int_cheri_cap_sealed_get
+  CAP_SEALED_GET,
+  /// Legalised int_cheri_cap_subset_test
+  CAP_SUBSET_TEST,
 };
 }
 
