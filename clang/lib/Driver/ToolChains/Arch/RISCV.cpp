@@ -11,6 +11,7 @@
 #include "clang/Driver/Driver.h"
 #include "clang/Driver/DriverDiagnostic.h"
 #include "clang/Driver/Options.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/Option/ArgList.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/Support/TargetParser.h"
@@ -372,6 +373,20 @@ void riscv::getRISCVTargetFeatures(const Driver &D, const llvm::Triple &Triple,
     Features.push_back("+relax");
   else
     Features.push_back("-relax");
+
+  if (Arg *A = Args.getLastArg(options::OPT_mabi_EQ)) {
+    bool IsPureCapability = llvm::StringSwitch<bool>(A->getValue())
+        .Case("il32pc64", true)
+        .Case("il32pc64f", true)
+        .Case("il32pc64d", true)
+        .Case("il32pc64e", true)
+        .Case("l64pc128", true)
+        .Case("l64pc128f", true)
+        .Case("l64pc128d", true)
+        .Default(false);
+    if (IsPureCapability)
+      Features.push_back("+cap-mode");
+  }
 
   // GCC Compatibility: -mno-save-restore is default, unless -msave-restore is
   // specified...
