@@ -52,6 +52,8 @@ enum NodeType : unsigned {
   // READ_CYCLE_WIDE - A read of the 64-bit cycle CSR on a 32-bit target
   // (returns (Lo, Hi)). It takes a chain operand.
   READ_CYCLE_WIDE,
+  CAP_CALL,
+  CAP_TAIL,
   /// Legalised int_cheri_cap_tag_get
   CAP_TAG_GET,
   /// Legalised int_cheri_cap_sealed_get
@@ -182,7 +184,7 @@ private:
   }
 
   template <class NodeTy>
-  SDValue getAddr(NodeTy *N, SelectionDAG &DAG, bool IsLocal = true) const;
+  SDValue getAddr(NodeTy *N, EVT Ty, SelectionDAG &DAG, bool IsLocal = true) const;
 
   SDValue getStaticTLSAddr(GlobalAddressSDNode *N, SelectionDAG &DAG,
                            bool UseGOT) const;

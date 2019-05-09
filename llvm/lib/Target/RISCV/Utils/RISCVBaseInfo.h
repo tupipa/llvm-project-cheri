@@ -60,6 +60,7 @@ enum {
   MO_TPREL_ADD,
   MO_TLS_GOT_HI,
   MO_TLS_GD_HI,
+  MO_CAPTAB_PCREL_HI,
 };
 } // namespace RISCVII
 

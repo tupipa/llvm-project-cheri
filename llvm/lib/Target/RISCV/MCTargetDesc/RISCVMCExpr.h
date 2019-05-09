@@ -37,6 +37,7 @@ public:
     VK_RISCV_CALL,
     VK_RISCV_CALL_PLT,
     VK_RISCV_32_PCREL,
+    VK_RISCV_CAPTAB_PCREL_HI,
     VK_RISCV_Invalid
   };
 
