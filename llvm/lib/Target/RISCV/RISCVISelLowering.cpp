@@ -2585,6 +2585,10 @@ RISCVTargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
     switch (Constraint[0]) {
     case 'r':
       return std::make_pair(0U, &RISCV::GPRRegClass);
+    case 'C':
+      if (Subtarget.hasCheri() && VT == Subtarget.typeForCapabilities())
+        return std::make_pair(0U, &RISCV::GPCRRegClass);
+      break;
     case 'f':
       if (Subtarget.hasStdExtF() && VT == MVT::f32)
         return std::make_pair(0U, &RISCV::FPR32RegClass);
@@ -2636,6 +2640,46 @@ RISCVTargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
                                .Default(RISCV::NoRegister);
   if (XRegFromAlias != RISCV::NoRegister)
     return std::make_pair(XRegFromAlias, &RISCV::GPRRegClass);
+
+  // Similarly, allow capability register ABI names to be used in constraint.
+  if (Subtarget.hasCheri()) {
+    Register CRegFromAlias = StringSwitch<Register>(Constraint.lower())
+                                 .Case("{cnull}", RISCV::C0)
+                                 .Case("{cra}", RISCV::C1)
+                                 .Case("{csp}", RISCV::C2)
+                                 .Case("{cgp}", RISCV::C3)
+                                 .Case("{ctp}", RISCV::C4)
+                                 .Case("{ct0}", RISCV::C5)
+                                 .Case("{ct1}", RISCV::C6)
+                                 .Case("{ct2}", RISCV::C7)
+                                 .Cases("{cs0}", "{cfp}", RISCV::C8)
+                                 .Case("{cs1}", RISCV::C9)
+                                 .Case("{ca0}", RISCV::C10)
+                                 .Case("{ca1}", RISCV::C11)
+                                 .Case("{ca2}", RISCV::C12)
+                                 .Case("{ca3}", RISCV::C13)
+                                 .Case("{ca4}", RISCV::C14)
+                                 .Case("{ca5}", RISCV::C15)
+                                 .Case("{ca6}", RISCV::C16)
+                                 .Case("{ca7}", RISCV::C17)
+                                 .Case("{cs2}", RISCV::C18)
+                                 .Case("{cs3}", RISCV::C19)
+                                 .Case("{cs4}", RISCV::C20)
+                                 .Case("{cs5}", RISCV::C21)
+                                 .Case("{cs6}", RISCV::C22)
+                                 .Case("{cs7}", RISCV::C23)
+                                 .Case("{cs8}", RISCV::C24)
+                                 .Case("{cs9}", RISCV::C25)
+                                 .Case("{cs10}", RISCV::C26)
+                                 .Case("{cs11}", RISCV::C27)
+                                 .Case("{ct3}", RISCV::C28)
+                                 .Case("{ct4}", RISCV::C29)
+                                 .Case("{ct5}", RISCV::C30)
+                                 .Case("{ct6}", RISCV::C31)
+                                 .Default(RISCV::NoRegister);
+    if (CRegFromAlias != RISCV::NoRegister)
+      return std::make_pair(CRegFromAlias, &RISCV::GPCRRegClass);
+  }
 
   // Since TargetLowering::getRegForInlineAsmConstraint uses the name of the
   // TableGen record rather than the AsmName to choose registers for InlineAsm
