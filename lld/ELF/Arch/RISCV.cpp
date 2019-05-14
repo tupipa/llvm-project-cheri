@@ -23,6 +23,7 @@ class RISCV final : public TargetInfo {
 public:
   RISCV();
   uint32_t calcEFlags() const override;
+  int getCapabilitySize() const override;
   void writeGotHeader(uint8_t *buf) const override;
   void writeGotPlt(uint8_t *buf, const Symbol &s) const override;
   void writePltHeader(uint8_t *buf) const override;
@@ -74,6 +75,10 @@ RISCV::RISCV() {
   noneRel = R_RISCV_NONE;
   pltRel = R_RISCV_JUMP_SLOT;
   relativeRel = R_RISCV_RELATIVE;
+  sizeRel = R_RISCV_CHERI_SIZE;
+  cheriCapRel = R_RISCV_CHERI_CAPABILITY;
+  // TODO: PLT stubs with a separate relocation
+  cheriCapCallRel = R_RISCV_CHERI_CAPABILITY;
   if (config->is64) {
     symbolicRel = R_RISCV_64;
     tlsModuleIndexRel = R_RISCV_TLS_DTPMOD64;
@@ -86,6 +91,7 @@ RISCV::RISCV() {
     tlsGotRel = R_RISCV_TLS_TPREL32;
   }
   gotRel = symbolicRel;
+  absPointerRel = symbolicRel;
 
   // .got[0] = _DYNAMIC
   gotBaseSymInGotPlt = false;
@@ -102,6 +108,10 @@ static uint32_t getEFlags(InputFile *f) {
   if (config->is64)
     return cast<ObjFile<ELF64LE>>(f)->getObj().getHeader()->e_flags;
   return cast<ObjFile<ELF32LE>>(f)->getObj().getHeader()->e_flags;
+}
+
+int RISCV::getCapabilitySize() const {
+  return config->is64 ? 16 : 8;
 }
 
 uint32_t RISCV::calcEFlags() const {
@@ -121,6 +131,14 @@ uint32_t RISCV::calcEFlags() const {
     if ((eflags & EF_RISCV_RVE) != (target & EF_RISCV_RVE))
       error(toString(f) +
             ": cannot link object files with different EF_RISCV_RVE");
+
+    if ((eflags & EF_RISCV_CHERIABI) != (target & EF_RISCV_CHERIABI))
+      error(toString(f) +
+            ": cannot link object files with different EF_RISCV_CHERIABI");
+
+    if ((eflags & EF_RISCV_CAP_MODE) != (target & EF_RISCV_CAP_MODE))
+      error(toString(f) +
+            ": cannot link object files with different EF_RISCV_CAP_MODE");
   }
 
   return target;
@@ -225,6 +243,10 @@ RelExpr RISCV::getRelExpr(const RelType type, const Symbol &s,
   case R_RISCV_ALIGN:
   case R_RISCV_TPREL_ADD:
     return R_HINT;
+  case R_RISCV_CHERI_CAPABILITY:
+    return R_CHERI_CAPABILITY;
+  case R_RISCV_CHERI_CAPTAB_PCREL_HI20:
+    return R_CHERI_CAPABILITY_TABLE_ENTRY_PC;
   default:
     return R_ABS;
   }
@@ -335,6 +357,7 @@ void RISCV::relocateOne(uint8_t *loc, const RelType type,
     return;
   }
 
+  case R_RISCV_CHERI_CAPTAB_PCREL_HI20:
   case R_RISCV_GOT_HI20:
   case R_RISCV_PCREL_HI20:
   case R_RISCV_TLS_GD_HI20:

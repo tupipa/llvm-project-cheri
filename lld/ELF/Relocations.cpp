@@ -411,6 +411,7 @@ static bool isStaticLinkTimeConstant(RelExpr e, RelType type, const Symbol &sym,
             R_CHERI_CAPABILITY_TABLE_INDEX_SMALL_IMMEDIATE,
             R_CHERI_CAPABILITY_TABLE_INDEX_CALL,
             R_CHERI_CAPABILITY_TABLE_INDEX_CALL_SMALL_IMMEDIATE,
+            R_CHERI_CAPABILITY_TABLE_ENTRY_PC,
             R_CHERI_CAPABILITY_TABLE_REL,
             R_MIPS_GOT_LOCAL_PAGE, R_MIPS_GOTREL, R_MIPS_GOT_OFF,
             R_MIPS_GOT_OFF32, R_MIPS_GOT_GP_PC, R_MIPS_TLSGD,
@@ -1349,7 +1350,8 @@ static void scanReloc(InputSectionBase &sec, OffsetGetter &getOffset, RelTy *&i,
   if (oneof<R_CHERI_CAPABILITY_TABLE_INDEX,
             R_CHERI_CAPABILITY_TABLE_INDEX_SMALL_IMMEDIATE,
             R_CHERI_CAPABILITY_TABLE_INDEX_CALL,
-            R_CHERI_CAPABILITY_TABLE_INDEX_CALL_SMALL_IMMEDIATE>(expr)) {
+            R_CHERI_CAPABILITY_TABLE_INDEX_CALL_SMALL_IMMEDIATE>(expr),
+            R_CHERI_CAPABILITY_TABLE_ENTRY_PC>(expr)) {
     assert(config->processCapRelocs);
     in.cheriCapTable->addEntry(sym, expr, &sec, offset);
     // Write out the index into the instruction
