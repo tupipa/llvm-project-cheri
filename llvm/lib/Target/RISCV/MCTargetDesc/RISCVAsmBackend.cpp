@@ -66,10 +66,13 @@ bool RISCVAsmBackend::shouldForceRelocation(const MCAssembler &Asm,
     case RISCV::fixup_riscv_captab_pcrel_hi20:
       ShouldForce = true;
       break;
-    case RISCV::fixup_riscv_pcrel_hi20:
-      ShouldForce = T->getValue()->findAssociatedFragment() !=
-                    Fixup.getValue()->findAssociatedFragment();
+    case RISCV::fixup_riscv_pcrel_hi20: {
+      MCFragment *TFragment = T->getValue()->findAssociatedFragment();
+      MCFragment *FixupFragment = Fixup.getValue()->findAssociatedFragment();
+      ShouldForce = !TFragment || !FixupFragment ||
+                    TFragment->getParent() != FixupFragment->getParent();
       break;
+    }
     }
     break;
   }
