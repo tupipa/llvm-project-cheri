@@ -6871,11 +6871,33 @@ void SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I,
       visitTargetIntrinsic(I, Intrinsic);
       return;
     }
-    // SetAddr($cap, $addr) -> CIncOffset($cap, $addr - GetAddr($cap))
-    SDValue Cap = getValue(I.getArgOperand(0));
-    SDValue Addr = getValue(I.getArgOperand(1));
+
+    Value *CapV = I.getArgOperand(0);
+    SDValue Cap = getValue(CapV);
+    Value *AddrV = I.getArgOperand(1);
+    SDValue Addr = getValue(AddrV);
+
     EVT CapVT = Cap.getValueType();
     EVT PtrVT = TLI.getPointerTy(DAG.getDataLayout(), 0);
+
+    if (isa<Constant>(CapV) && cast<Constant>(CapV)->isNullValue()) {
+      if (ConstantInt *AddrC = dyn_cast<ConstantInt>(AddrV)) {
+        if (AddrC->getValue() == 0) {
+          // SetAddr(null, 0) -> null
+          Res = Cap;
+        } else {
+          // SetAddr(null, $addr) -> CIncOffset(null, $addr)
+          Res = DAG.getNode(
+              ISD::INTRINSIC_WO_CHAIN, sdl, CapVT,
+              DAG.getConstant(Intrinsic::cheri_cap_offset_increment, sdl, PtrVT),
+              Cap, Addr);
+        }
+        setValue(&I, Res);
+        return;
+      }
+    }
+
+    // SetAddr($cap, $addr) -> CIncOffset($cap, $addr - GetAddr($cap))
     SDValue CapAddr = DAG.getNode(
         ISD::INTRINSIC_WO_CHAIN, sdl, PtrVT,
         DAG.getConstant(Intrinsic::cheri_cap_address_get, sdl, PtrVT), Cap);
