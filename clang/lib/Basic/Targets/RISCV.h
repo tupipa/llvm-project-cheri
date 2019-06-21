@@ -132,6 +132,8 @@ public:
   }
 
   bool SupportsCapabilities() const override { return HasCheri; }
+
+  bool validateTarget(DiagnosticsEngine &Diags) const override;
 };
 class LLVM_LIBRARY_VISIBILITY RISCV32TargetInfo : public RISCVTargetInfo {
 public:
