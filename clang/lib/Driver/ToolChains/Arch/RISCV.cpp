@@ -369,8 +369,14 @@ void riscv::getRISCVTargetFeatures(const Driver &D, const ArgList &Args,
         .Case("l64pc128f", true)
         .Case("l64pc128d", true)
         .Default(false);
-    if (IsPureCapability)
+    if (IsPureCapability) {
+      if (llvm::find(Features, "+xcheri") == Features.end()) {
+        D.Diag(diag::err_riscv_invalid_abi) << A->getValue()
+          << "pure capability ABI requires xcheri extension to be specified";
+        return;
+      }
       Features.push_back("+cap-mode");
+    }
   }
 
   // Now add any that the user explicitly requested on the command line,

@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "RISCV.h"
+#include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/MacroBuilder.h"
 #include "llvm/ADT/StringSwitch.h"
 
@@ -168,6 +169,16 @@ bool RISCVTargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
   }
 
   setDataLayout();
+
+  return true;
+}
+
+bool RISCVTargetInfo::validateTarget(DiagnosticsEngine &Diags) const {
+  if (CapabilityABI && !HasCheri) {
+    Diags.Report(diag::err_riscv_invalid_abi) << PurecapABI
+      << "pure capability ABI requires xcheri extension to be specified";
+    return false;
+  }
 
   return true;
 }

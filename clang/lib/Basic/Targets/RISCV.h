@@ -51,6 +51,7 @@ class RISCVTargetInfo : public TargetInfo {
 
 protected:
   std::string ABI;
+  std::string PurecapABI;
   bool HasM;
   bool HasA;
   bool HasF;
@@ -120,6 +121,8 @@ public:
   }
 
   bool SupportsCapabilities() const override { return HasCheri; }
+
+  bool validateTarget(DiagnosticsEngine &Diags) const override;
 };
 class LLVM_LIBRARY_VISIBILITY RISCV32TargetInfo : public RISCVTargetInfo {
 public:
@@ -138,6 +141,7 @@ public:
       return true;
     }
     if (Name == "il32pc64") {
+      PurecapABI = Name;
       setCapabilityABITypes();
       CapabilityABI = true;
       ABI = "ilp32";
@@ -164,6 +168,7 @@ public:
       return true;
     }
     if (Name == "l64pc128") {
+      PurecapABI = Name;
       setCapabilityABITypes();
       CapabilityABI = true;
       ABI = "lp64";
