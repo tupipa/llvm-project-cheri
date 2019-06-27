@@ -15949,8 +15949,7 @@ SDValue DAGCombiner::replaceStoreOfFPConstant(StoreSDNode *ST) {
 
       SDValue St0 = DAG.getStore(Chain, DL, Lo, Ptr, ST->getPointerInfo(),
                                  ST->getAlignment(), MMOFlags, AAInfo);
-      Ptr = DAG.getNode(ISD::ADD, DL, Ptr.getValueType(), Ptr,
-                        DAG.getConstant(4, DL, Ptr.getValueType()));
+      Ptr = DAG.getPointerAdd(DL, Ptr, 4);
       Alignment = MinAlign(Alignment, 4U);
       SDValue St1 = DAG.getStore(Chain, DL, Hi, Ptr,
                                  ST->getPointerInfo().getWithOffset(4),
