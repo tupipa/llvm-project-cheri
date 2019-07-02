@@ -24,6 +24,7 @@ add_llvm_target(RISCVCodeGen
   RISCVMCInstLower.cpp
   RISCVMergeBaseOffset.cpp
   RISCVRegisterInfo.cpp
+  RISCVSelectionDAGInfo.cpp
   RISCVSubtarget.cpp
   RISCVTargetMachine.cpp
   RISCVTargetObjectFile.cpp

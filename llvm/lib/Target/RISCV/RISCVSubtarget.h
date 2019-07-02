@@ -16,6 +16,7 @@
 #include "RISCVFrameLowering.h"
 #include "RISCVISelLowering.h"
 #include "RISCVInstrInfo.h"
+#include "RISCVSelectionDAGInfo.h"
 #include "Utils/RISCVBaseInfo.h"
 #include "llvm/CodeGen/SelectionDAGTargetInfo.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
@@ -47,7 +48,7 @@ class RISCVSubtarget : public RISCVGenSubtargetInfo {
   RISCVInstrInfo InstrInfo;
   RISCVRegisterInfo RegInfo;
   RISCVTargetLowering TLInfo;
-  SelectionDAGTargetInfo TSInfo;
+  RISCVSelectionDAGInfo TSInfo;
 
   /// Initializes using the passed in CPU and feature strings so that we can
   /// use initializer lists for subtarget initialization.
