@@ -576,9 +576,11 @@ class Swap<PatFrag BinFrag>
 def  : CheriSetCCPatGpcrNull<seteq, (SLTIU node:$rs1, 1)>;
 def  : CheriSetCCPatGpcrGpcr<seteq, (SLTIU (XOR node:$rs1, node:$rs2), 1)>;
 defm : CheriSetCCPatGpcrSimm12<seteq, (SLTIU (XORI node:$rs1, node:$imm12), 1)>;
+defm : CheriSetCCPatGpcrSimm12<Swap<seteq>, (SLTIU (XORI node:$rs1, node:$imm12), 1)>;
 def  : CheriSetCCPatGpcrNull<setne, (SLTU X0, node:$rs1)>;
 def  : CheriSetCCPatGpcrGpcr<setne, (SLTU X0, (XOR node:$rs1, node:$rs2))>;
 defm : CheriSetCCPatGpcrSimm12<setne, (SLTU X0, (XORI node:$rs1, node:$imm12))>;
+defm : CheriSetCCPatGpcrSimm12<Swap<setne>, (SLTU X0, (XORI node:$rs1, node:$imm12))>;
 def  : CheriSetCCPatGpcrGpcr<setugt, (SLTU node:$rs2, node:$rs1)>;
 defm : CheriSetCCPatGpcrSimm12<Swap<setugt>, (SLTIU node:$rs1, node:$imm12)>;
 def  : CheriSetCCPatGpcrGpcr<setuge, (XORI (SLTU node:$rs1, node:$rs2), 1)>;
