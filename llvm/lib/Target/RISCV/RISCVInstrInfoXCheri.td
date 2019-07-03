@@ -509,9 +509,9 @@ def : Pat<(int_cheri_pcc_get), (CSpecialRW C0, SCR_PCC.Encoding)>;
 
 /// Null Capability Patterns
 
-def : Pat<(int_cheri_cap_from_pointer DDC, (XLenVT 0)), (CLenVT C0)>;
-def : Pat<(int_cheri_cap_from_ddc (XLenVT 0)), (CLenVT C0)>;
-def : Pat<(inttoptr (XLenVT 0)), (CLenVT C0)>;
+def : Pat<(int_cheri_cap_from_pointer DDC, (XLenVT 0)), (CLenVT (COPY C0))>;
+def : Pat<(int_cheri_cap_from_ddc (XLenVT 0)), (CLenVT (COPY C0))>;
+def : Pat<(inttoptr (XLenVT 0)), (CLenVT (COPY C0))>;
 
 /// Pointer-Comparison Instructions
 
