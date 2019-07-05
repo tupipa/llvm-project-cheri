@@ -155,6 +155,10 @@ public:
 
   bool shouldExtendTypeInLibCall(EVT Type) const override;
 
+  EVT getOptimalMemOpType(uint64_t Size, unsigned DstAlign, unsigned SrcAlign,
+                          bool IsMemset, bool ZeroMemset, bool MemcpyStrSrc,
+                          const AttributeList &FuncAttributes) const override;
+
 private:
   void analyzeInputArgs(MachineFunction &MF, CCState &CCInfo,
                         const SmallVectorImpl<ISD::InputArg> &Ins,
