@@ -1319,12 +1319,11 @@ static bool CC_RISCV(const DataLayout &DL, unsigned ValNo, MVT ValVT, MVT LocVT,
   // legalisation or not. The argument will not be passed by registers if the
   // original type is larger than 2*XLEN, so the register alignment rule does
   // not apply.
-  // Capabilities do not count as this since they are passed in a single
-  // register.
   // TODO: Pure capability varargs bounds
   unsigned TwoXLenInBytes = (2 * XLen) / 8;
-  if (!IsFixed && ArgFlags.getOrigAlign() == TwoXLenInBytes &&
-      DL.getTypeAllocSize(OrigTy) == TwoXLenInBytes && ValVT != CLenVT) {
+  if (!IsFixed && !RISCVABI::isCheriPureCapABI(ABI) &&
+      ArgFlags.getOrigAlign() == TwoXLenInBytes &&
+      DL.getTypeAllocSize(OrigTy) == TwoXLenInBytes) {
     unsigned RegIdx = State.getFirstUnallocated(ArgGPRs);
     // Skip 'odd' register if necessary.
     if (RegIdx != array_lengthof(ArgGPRs) && RegIdx % 2 == 1)
@@ -1340,7 +1339,8 @@ static bool CC_RISCV(const DataLayout &DL, unsigned ValNo, MVT ValVT, MVT LocVT,
 
   // Handle passing f64 on RV32D with a soft float ABI or when floating point
   // registers are exhausted.
-  if (UseGPRForF64 && XLen == 32 && ValVT == MVT::f64) {
+  if (UseGPRForF64 && XLen == 32 && ValVT == MVT::f64 &&
+      (IsFixed || !RISCVABI::isCheriPureCapABI(ABI))) {
     assert(!ArgFlags.isSplit() && PendingLocs.empty() &&
            "Can't lower f64 if it is split");
     // Depending on available argument GPRS, f64 may be passed in a pair of
@@ -1389,16 +1389,18 @@ static bool CC_RISCV(const DataLayout &DL, unsigned ValNo, MVT ValVT, MVT LocVT,
   }
 
   // Allocate to a register if possible, or else a stack slot.
+  unsigned ArgBytes = ValVT == CLenVT ? DL.getPointerSize(200) : XLen / 8;
   unsigned Reg;
-  unsigned ArgBytes = XLen / 8;
-  if (ValVT == MVT::f32 && !UseGPRForF32)
+  // Always pass pure capability varargs on the stack
+  if (!IsFixed && RISCVABI::isCheriPureCapABI(ABI))
+    Reg = 0;
+  else if (ValVT == MVT::f32 && !UseGPRForF32)
     Reg = State.AllocateReg(ArgFPR32s, ArgFPR64s);
   else if (ValVT == MVT::f64 && !UseGPRForF64)
     Reg = State.AllocateReg(ArgFPR64s, ArgFPR32s);
-  else if (ValVT == CLenVT) {
+  else if (ValVT == CLenVT)
     Reg = State.AllocateReg(ArgGPCRs);
-    ArgBytes = DL.getPointerSize(200);
-  } else
+  else
     Reg = State.AllocateReg(ArgGPRs);
   unsigned StackOffset = Reg ? 0 : State.AllocateStack(ArgBytes, ArgBytes);
 
@@ -1701,24 +1703,20 @@ SDValue RISCVTargetLowering::LowerFormalArguments(
     InVals.push_back(ArgValue);
   }
 
-  if (IsVarArg) {
-    MVT ArgVT;
-    ArrayRef<MCPhysReg> ArgRegs;
-    const TargetRegisterClass *RC;
-    if (RISCVABI::isCheriPureCapABI(Subtarget.getTargetABI())) {
-      ArgVT = Subtarget.typeForCapabilities();
-      ArgRegs = makeArrayRef(ArgGPCRs);
-      RC = &RISCV::GPCRRegClass;
-    } else {
-      ArgVT = XLenVT;
-      ArgRegs = makeArrayRef(ArgGPRs);
-      RC = &RISCV::GPRRegClass;
-    }
-    unsigned ArgBytes = ArgVT.getSizeInBits() / 8;
+  MachineFrameInfo &MFI = MF.getFrameInfo();
+  RISCVMachineFunctionInfo *RVFI = MF.getInfo<RISCVMachineFunctionInfo>();
+  unsigned XLenInBytes = Subtarget.getXLen() / 8;
+  if (IsVarArg && RISCVABI::isCheriPureCapABI(Subtarget.getTargetABI())) {
+    // Record the frame index of the first variable argument
+    // which is a value necessary to VASTART.
+    int FI = MFI.CreateFixedObject(XLenInBytes, CCInfo.getNextStackOffset(),
+                                   true);
+    RVFI->setVarArgsFrameIndex(FI);
+  } else if (IsVarArg) {
+    ArrayRef<MCPhysReg> ArgRegs = makeArrayRef(ArgGPRs);
     unsigned Idx = CCInfo.getFirstUnallocated(ArgRegs);
-    MachineFrameInfo &MFI = MF.getFrameInfo();
+    const TargetRegisterClass *RC = &RISCV::GPRRegClass;
     MachineRegisterInfo &RegInfo = MF.getRegInfo();
-    RISCVMachineFunctionInfo *RVFI = MF.getInfo<RISCVMachineFunctionInfo>();
 
     // Offset of the first variable argument from stack pointer, and size of
     // the vararg save area. For now, the varargs save area is either zero or
@@ -1731,32 +1729,32 @@ SDValue RISCVTargetLowering::LowerFormalArguments(
       VaArgOffset = CCInfo.getNextStackOffset();
       VarArgsSaveSize = 0;
     } else {
-      VarArgsSaveSize = ArgBytes * (ArgRegs.size() - Idx);
+      VarArgsSaveSize = XLenInBytes * (ArgRegs.size() - Idx);
       VaArgOffset = -VarArgsSaveSize;
     }
 
     // Record the frame index of the first variable argument
     // which is a value necessary to VASTART.
-    int FI = MFI.CreateFixedObject(ArgBytes, VaArgOffset, true);
+    int FI = MFI.CreateFixedObject(XLenInBytes, VaArgOffset, true);
     RVFI->setVarArgsFrameIndex(FI);
 
     // If saving an odd number of registers then create an extra stack slot to
     // ensure that the frame pointer is 2*XLEN-aligned, which in turn ensures
     // offsets to even-numbered registered remain 2*XLEN-aligned.
     if (Idx % 2) {
-      FI = MFI.CreateFixedObject(ArgBytes, VaArgOffset - (int)ArgBytes,
+      FI = MFI.CreateFixedObject(XLenInBytes, VaArgOffset - (int)XLenInBytes,
                                  true);
-      VarArgsSaveSize += ArgBytes;
+      VarArgsSaveSize += XLenInBytes;
     }
 
     // Copy the integer registers that may have been used for passing varargs
     // to the vararg save area.
     for (unsigned I = Idx; I < ArgRegs.size();
-         ++I, VaArgOffset += ArgBytes) {
+         ++I, VaArgOffset += XLenInBytes) {
       const unsigned Reg = RegInfo.createVirtualRegister(RC);
       RegInfo.addLiveIn(ArgRegs[I], Reg);
-      SDValue ArgValue = DAG.getCopyFromReg(Chain, DL, Reg, ArgVT);
-      FI = MFI.CreateFixedObject(ArgBytes, VaArgOffset, true);
+      SDValue ArgValue = DAG.getCopyFromReg(Chain, DL, Reg, XLenVT);
+      FI = MFI.CreateFixedObject(XLenInBytes, VaArgOffset, true);
       SDValue PtrOff = DAG.getFrameIndex(FI, PtrVT);
       SDValue Store = DAG.getStore(Chain, DL, ArgValue, PtrOff,
                                    MachinePointerInfo::getFixedStack(MF, FI));
