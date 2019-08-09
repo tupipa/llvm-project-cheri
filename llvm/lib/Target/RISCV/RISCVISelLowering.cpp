@@ -1319,10 +1319,12 @@ static bool CC_RISCV(const DataLayout &DL, unsigned ValNo, MVT ValVT, MVT LocVT,
   // legalisation or not. The argument will not be passed by registers if the
   // original type is larger than 2*XLEN, so the register alignment rule does
   // not apply.
-  // TODO: Pure capability varargs
+  // Capabilities do not count as this since they are passed in a single
+  // register.
+  // TODO: Pure capability varargs bounds
   unsigned TwoXLenInBytes = (2 * XLen) / 8;
   if (!IsFixed && ArgFlags.getOrigAlign() == TwoXLenInBytes &&
-      DL.getTypeAllocSize(OrigTy) == TwoXLenInBytes) {
+      DL.getTypeAllocSize(OrigTy) == TwoXLenInBytes && ValVT != CLenVT) {
     unsigned RegIdx = State.getFirstUnallocated(ArgGPRs);
     // Skip 'odd' register if necessary.
     if (RegIdx != array_lengthof(ArgGPRs) && RegIdx % 2 == 1)
