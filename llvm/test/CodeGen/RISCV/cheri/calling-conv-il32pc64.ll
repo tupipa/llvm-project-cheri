@@ -59,6 +59,31 @@ while.end:
   ret i8 addrspace(200)* %6
 }
 
+declare void @varargs(i32, ...) addrspace(200) nounwind
+
+; Make sure this goes in c1/cra rather than c2; normally 2*XLen sized and
+; aligned structs go in an even integer register pair and would thus skip the
+; odd register.
+define void @test_varargs_odd_cap_reg() nounwind {
+; CHECK-LABEL: test_varargs_odd_cap_reg:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    cincoffset csp, csp, -16
+; CHECK-NEXT:    csc cra, 8(csp)
+; CHECK-NEXT:  .LBB1_1: # %entry
+; CHECK-NEXT:    # Label of block must be emitted
+; CHECK-NEXT:    auipcc ca2, %captab_pcrel_hi(varargs)
+; CHECK-NEXT:    clc ca2, %pcrel_lo(.LBB1_1)(ca2)
+; CHECK-NEXT:    addi a0, zero, 1
+; CHECK-NEXT:    cmove ca1, cnull
+; CHECK-NEXT:    cjalr cra, ca2
+; CHECK-NEXT:    clc cra, 8(csp)
+; CHECK-NEXT:    cincoffset csp, csp, 16
+; CHECK-NEXT:    cret
+entry:
+  tail call addrspace(200) void (i32, ...) @varargs(i32 1, i8 addrspace(200)* null)
+  ret void
+}
+
 declare void @llvm.lifetime.start.p200i8(i64, i8 addrspace(200)* nocapture)
 declare void @llvm.va_start.p200i8(i8 addrspace(200)*)
 declare i32 @llvm.cheri.cap.address.get(i8 addrspace(200)*)
