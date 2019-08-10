@@ -1532,6 +1532,7 @@ static bool CC_RISCV(const DataLayout &DL, unsigned ValNo, MVT ValVT, MVT LocVT,
   MVT XLenVT = XLen == 32 ? MVT::i32 : MVT::i64;
   MVT CLenVT = Subtarget.hasCheri() ? Subtarget.typeForCapabilities()
                                     : MVT();
+  MVT PtrVT = DL.isFatPointer(DL.getAllocaAddrSpace()) ? CLenVT : XLenVT;
 
   // Any return value split in to more than two values can't be returned
   // directly.
@@ -1660,6 +1661,11 @@ static bool CC_RISCV(const DataLayout &DL, unsigned ValNo, MVT ValVT, MVT LocVT,
                                ArgFlags);
   }
 
+  // Will be passed indirectly; make sure we allocate the right type of
+  // register for the pointer.
+  if (!PendingLocs.empty())
+    ValVT = PtrVT;
+
   // Allocate to a register if possible, or else a stack slot.
   Register Reg;
   unsigned ArgBytes = ValVT == CLenVT ? DL.getPointerSize(200) : XLen / 8;
@@ -1684,10 +1690,13 @@ static bool CC_RISCV(const DataLayout &DL, unsigned ValNo, MVT ValVT, MVT LocVT,
 
     for (auto &It : PendingLocs) {
       if (Reg)
-        It.convertToReg(Reg);
+        State.addLoc(
+            CCValAssign::getReg(It.getValNo(), It.getValVT(), Reg,
+                                PtrVT, CCValAssign::Indirect));
       else
-        It.convertToMem(StackOffset);
-      State.addLoc(It);
+        State.addLoc(
+            CCValAssign::getMem(It.getValNo(), It.getValVT(), StackOffset,
+                                PtrVT, CCValAssign::Indirect));
     }
     PendingLocs.clear();
     PendingArgFlags.clear();
