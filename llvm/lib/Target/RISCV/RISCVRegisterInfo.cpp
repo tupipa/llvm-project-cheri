@@ -111,7 +111,8 @@ void RISCVRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   MachineInstr &MI = *II;
   MachineFunction &MF = *MI.getParent()->getParent();
   MachineRegisterInfo &MRI = MF.getRegInfo();
-  const RISCVInstrInfo *TII = MF.getSubtarget<RISCVSubtarget>().getInstrInfo();
+  const RISCVSubtarget &STI = MF.getSubtarget<RISCVSubtarget>();
+  const RISCVInstrInfo *TII = STI.getInstrInfo();
   DebugLoc DL = MI.getDebugLoc();
 
   int FrameIndex = MI.getOperand(FIOperandNum).getIndex();
@@ -132,13 +133,23 @@ void RISCVRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     assert(isInt<32>(Offset) && "Int32 expected");
     // The offset won't fit in an immediate, so use a scratch register instead
     // Modify Offset and FrameReg appropriately
+    unsigned Opc;
     unsigned ScratchReg = MRI.createVirtualRegister(&RISCV::GPRRegClass);
+    unsigned DestReg;
+    if (RISCVABI::isCheriPureCapABI(STI.getTargetABI())) {
+      Opc = RISCV::CIncOffset;
+      DestReg = MRI.createVirtualRegister(&RISCV::GPCRRegClass);
+    } else {
+      Opc = RISCV::ADD;
+      DestReg = ScratchReg;
+    }
+
     TII->movImm32(MBB, II, DL, ScratchReg, Offset);
-    BuildMI(MBB, II, DL, TII->get(RISCV::ADD), ScratchReg)
+    BuildMI(MBB, II, DL, TII->get(Opc), DestReg)
         .addReg(FrameReg)
         .addReg(ScratchReg, RegState::Kill);
     Offset = 0;
-    FrameReg = ScratchReg;
+    FrameReg = DestReg;
     FrameRegIsKill = true;
   }
 

@@ -74,13 +74,10 @@ void RISCVFrameLowering::adjustReg(MachineBasicBlock &MBB,
         .setMIFlag(Flag);
   } else if (isInt<32>(Val)) {
     unsigned Opc;
-    const TargetRegisterClass *RC;
     if (RISCVABI::isCheriPureCapABI(STI.getTargetABI())) {
       Opc = RISCV::CIncOffset;
-      RC = &RISCV::GPCRRegClass;
     } else {
       Opc = RISCV::ADD;
-      RC = &RISCV::GPRRegClass;
       bool isSub = Val < 0;
       if (isSub) {
         Val = -Val;
@@ -88,7 +85,7 @@ void RISCVFrameLowering::adjustReg(MachineBasicBlock &MBB,
       }
     }
 
-    unsigned ScratchReg = MRI.createVirtualRegister(RC);
+    unsigned ScratchReg = MRI.createVirtualRegister(&RISCV::GPRRegClass);
     TII->movImm32(MBB, MBBI, DL, ScratchReg, Val, Flag);
     BuildMI(MBB, MBBI, DL, TII->get(Opc), DestReg)
         .addReg(SrcReg)
