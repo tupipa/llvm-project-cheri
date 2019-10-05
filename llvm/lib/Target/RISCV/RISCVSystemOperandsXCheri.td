@@ -62,6 +62,7 @@ def SCR_DDC : SpecialCapReg<"ddc", 0x01>;
 // User Trap Setup/Handling
 //===------------------------------
 def : SpecialCapReg<"utcc", 0x04>;
+def : SpecialCapReg<"utdc", 0x05>;
 def : SpecialCapReg<"uscratchc", 0x06>;
 def : SpecialCapReg<"uepcc", 0x07>;
 
@@ -69,6 +70,7 @@ def : SpecialCapReg<"uepcc", 0x07>;
 // Supervisor Trap Setup/Handling
 //===------------------------------
 def : SpecialCapReg<"stcc", 0x0c>;
+def : SpecialCapReg<"stdc", 0x0d>;
 def : SpecialCapReg<"sscratchc", 0x0e>;
 def : SpecialCapReg<"sepcc", 0x0f>;
 
@@ -76,5 +78,6 @@ def : SpecialCapReg<"sepcc", 0x0f>;
 // Machine Trap Setup/Handling
 //===------------------------------
 def : SpecialCapReg<"mtcc", 0x1c>;
+def : SpecialCapReg<"mtdc", 0x1d>;
 def : SpecialCapReg<"mscratchc", 0x1e>;
 def : SpecialCapReg<"mepcc", 0x1f>;
