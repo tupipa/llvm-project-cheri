@@ -1350,7 +1350,7 @@ static void scanReloc(InputSectionBase &sec, OffsetGetter &getOffset, RelTy *&i,
   if (oneof<R_CHERI_CAPABILITY_TABLE_INDEX,
             R_CHERI_CAPABILITY_TABLE_INDEX_SMALL_IMMEDIATE,
             R_CHERI_CAPABILITY_TABLE_INDEX_CALL,
-            R_CHERI_CAPABILITY_TABLE_INDEX_CALL_SMALL_IMMEDIATE>(expr),
+            R_CHERI_CAPABILITY_TABLE_INDEX_CALL_SMALL_IMMEDIATE,
             R_CHERI_CAPABILITY_TABLE_ENTRY_PC>(expr)) {
     assert(config->processCapRelocs);
     in.cheriCapTable->addEntry(sym, expr, &sec, offset);
