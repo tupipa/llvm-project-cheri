@@ -2577,6 +2577,7 @@ RISCVTargetLowering::getConstraintType(StringRef Constraint) const {
     switch (Constraint[0]) {
     default:
       break;
+    case 'C':
     case 'f':
       return C_RegisterClass;
     case 'I':
@@ -2599,6 +2600,10 @@ RISCVTargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
   if (Constraint.size() == 1) {
     switch (Constraint[0]) {
     case 'r':
+      // Don't try to split/combine capabilities in order to use a GPR; give a
+      // friendlier error message instead.
+      if (Subtarget.hasCheri() && VT == Subtarget.typeForCapabilities())
+        break;
       return std::make_pair(0U, &RISCV::GPRRegClass);
     case 'C':
       if (Subtarget.hasCheri() && VT == Subtarget.typeForCapabilities())
