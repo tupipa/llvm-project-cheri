@@ -218,7 +218,7 @@ cheri_init_globals_3(void *data_cap, const void *code_cap,
        "2: auipcc %2, %%pcrel_hi(__stop___cap_relocs)\n\t"
        "cincoffset %2, %2, %%pcrel_lo(2b)\n\t"
        cgetaddr_or_offset " %1, %2\n\t"
-       :"=r"(start_addr), "=r"(end_addr), "=&r"(tmp));
+       :"=r"(start_addr), "=r"(end_addr), "=&C"(tmp));
 #else
 #error Unknown architecture
 #endif
