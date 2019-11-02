@@ -69,6 +69,13 @@ namespace {
       errs() << "PrivilegeDataTrack: ";
       errs().write_escaped(F.getName()) << "\t return type: ";
       F.getReturnType()->dump();
+      errs() << "\t attribute: ";
+      F.getAttributes().dump();
+     /*
+      for (auto attr: F.getAttributes()){
+          errs().write_escaped(attr.getKindAsString()) << "," ;
+          errs().write_escaped(attr.getValueAsString()) << ";" ;
+      }*/
       errs() << '\n';
       return false;
     }
