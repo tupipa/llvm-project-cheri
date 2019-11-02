@@ -15,7 +15,10 @@
 #include "llvm/IR/Function.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/raw_ostream.h"
+
+#include "llvm/IR/LegacyPassManager.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
+
 using namespace llvm;
 
 #define DEBUG_TYPE "privilegeDataTrack"
@@ -43,7 +46,6 @@ static RegisterPass<PrivilegeDataTrack> X("privilegeDataTrack", "PrivilegeDataTr
                              false /* Analysis Pass */);
 
 
-#if 0 // does not work: member access into incomplete type 'legacy::PassManagerBase'
 /**
  *  register the pass as a step of an existing pipeline, some extension points are provided, e.g. PassManagerBuilder::EP_EarlyAsPossible to apply our pass before any optimization, or PassManagerBuilder::EP_FullLinkTimeOptimizationLast to apply it after Link Time Optimizations.
  * 
@@ -55,7 +57,6 @@ static RegisterStandardPasses Z(
     PassManagerBuilder::EP_EarlyAsPossible,
     [](const PassManagerBuilder &Builder,
        legacy::PassManagerBase &PM) { PM.add(new PrivilegeDataTrack()); });
-#endif 
 
 namespace {
   // PrivilegeDataTrack2 - The second implementation with getAnalysisUsage implemented, and with attributes 'privileged_data'
@@ -86,7 +87,6 @@ Y("privilegeDataTrack2", "PrivilegeDataTrack World Pass (with getAnalysisUsage i
                              false /* Analysis Pass */);
 
 
-#if 0 // does not work: member access into incomplete type 'legacy::PassManagerBase'
 
 /**
  *  register the pass as a step of an existing pipeline, some extension points are provided, e.g. PassManagerBuilder::EP_EarlyAsPossible to apply our pass before any optimization, or PassManagerBuilder::EP_FullLinkTimeOptimizationLast to apply it after Link Time Optimizations.
@@ -100,4 +100,3 @@ static RegisterStandardPasses Z2(
     [](const PassManagerBuilder &Builder,
        legacy::PassManagerBase &PM) { PM.add(new PrivilegeDataTrack2()); });
 
-#endif
