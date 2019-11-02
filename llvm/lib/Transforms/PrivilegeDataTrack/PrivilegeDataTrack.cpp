@@ -66,7 +66,9 @@ namespace {
     bool runOnFunction(Function &F) override {
       ++HelloCounter;
       errs() << "PrivilegeDataTrack: ";
-      errs().write_escaped(F.getName()) << '\n';
+      errs().write_escaped(F.getName()) << "\t return type: ";
+      errs().write_escaped(F.getFunctionType()->getStructName());
+      errs() << '\n';
       return false;
     }
 
