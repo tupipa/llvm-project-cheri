@@ -68,7 +68,7 @@ namespace {
       ++HelloCounter;
       errs() << "PrivilegeDataTrack: ";
       errs().write_escaped(F.getName()) << "\t return type: ";
-      errs().write_escaped(F.getFunctionType()->getStructName());
+      F.getReturnType()->dump();
       errs() << '\n';
       return false;
     }
