@@ -217,6 +217,13 @@ def WriteOnly : EnumAttr<"writeonly">;
 /// Zero extended before/after call.
 def ZExt : EnumAttr<"zeroext">;
 
+/// LLM: privilege data and functions
+def PrivilegeData : EnumAttr<"privilege_data">;
+def PrivilegeFunction : EnumAttr<"privilege_function">;
+
+/// LLM: privilege level
+def PrivilegeLevel : EnumAttr<"privilege_level">;
+
 /// Target-independent string attributes.
 def LessPreciseFPMAD : StrBoolAttr<"less-precise-fpmad">;
 def NoInfsFPMath : StrBoolAttr<"no-infs-fp-math">;

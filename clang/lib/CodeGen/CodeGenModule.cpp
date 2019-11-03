@@ -1697,6 +1697,14 @@ void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
       B.addAttribute(llvm::Attribute::MinSize);
   }
 
+  // LLM: privilege tracking attributes for functions
+  if (D->hasAttr<PrivilegeFunctionAttr>()){
+      B.addAttribute(llvm::Attribute::PrivilegeFunction);
+  }
+  if (D->hasAttr<PrivilegeLevelAttr>()){
+      B.addAttribute(llvm::Attribute::PrivilegeLevel);
+  }
+
   F->addAttributes(llvm::AttributeList::FunctionIndex, B);
 
   unsigned alignment = D->getMaxAlignment() / Context.getCharWidth();

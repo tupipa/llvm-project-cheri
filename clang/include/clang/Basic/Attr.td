@@ -1899,6 +1899,22 @@ def Packed : InheritableAttr {
   let Documentation = [Undocumented];
 }
 
+// LLM: privilege tracking related attribute
+
+def PrivilegeData : DeclOrTypeAttr {
+  let Spellings = [GNU<"privilege_data">];
+  let Documentation = [Undocumented];
+}
+def PrivilegeFunction : DeclOrTypeAttr {
+  let Spellings = [GNU<"privilege_function">];
+  let Documentation = [Undocumented];
+}
+def PrivilegeLevel : DeclOrTypeAttr {
+  let Spellings = [GNU<"privilege_level">];
+  let Documentation = [Undocumented];
+  let Args = [DefaultIntArgument<"PrivilegeLevel", 100>];
+}
+
 // CHERI-related attributes
 
 def CHERICapability : TypeAttr {

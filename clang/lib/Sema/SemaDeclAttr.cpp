@@ -7072,6 +7072,20 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
   case ParsedAttr::AT_CFICanonicalJumpTable:
     handleSimpleAttribute<CFICanonicalJumpTableAttr>(S, D, AL);
     break;
+
+  // LLM: privilege tracking attribute
+  case ParsedAttr::AT_PrivilegeData:
+    handleSimpleAttribute<PrivilegeDataAttr>(S, D, AL);
+    break;
+#if 1
+  case ParsedAttr::AT_PrivilegeFunction:
+    handleSimpleAttribute<PrivilegeFunctionAttr>(S, D, AL);
+    break;
+  case ParsedAttr::AT_PrivilegeLevel:
+    handleSimpleAttribute<PrivilegeLevelAttr>(S, D, AL);
+    break;
+#endif
+
   case ParsedAttr::AT_CHERIMethodClass:
     handleCHERIMethodClass(S, D, AL);
     break;

@@ -462,6 +462,18 @@ std::string Attribute::getAsString(bool InAttrGrp) const {
     return Result;
   }
 
+  // LLM: for privilge data/function/level tracking
+  if (hasAttribute(Attribute::PrivilegeData))
+    return "privilege_data";
+  if (hasAttribute(Attribute::PrivilegeFunction))
+    return "privilege_function";
+  if (hasAttribute(Attribute::PrivilegeLevel)){
+    std::string Result;
+    Result += "privilege_level=";
+    Result += utostr(getValueAsInt());
+    return Result;
+  }
+
   // Convert target-dependent attributes to strings of the form:
   //
   //   "kind"
