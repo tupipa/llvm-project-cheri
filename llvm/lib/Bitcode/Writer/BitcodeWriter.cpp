@@ -727,6 +727,14 @@ static uint64_t getAttrKindEncoding(Attribute::AttrKind Kind) {
     return bitc::ATTR_KIND_IMMARG;
   case Attribute::SanitizeMemTag:
     return bitc::ATTR_KIND_SANITIZE_MEMTAG;
+  //LLM: priv track
+  case Attribute::PrivilegeData:
+    return bitc::ATTR_KIND_PRIVILEGE_DATA;
+  case Attribute::PrivilegeFunction:
+    return bitc::ATTR_KIND_PRIVILEGE_FUNCTION;
+  case Attribute::PrivilegeLevel:
+    return bitc::ATTR_KIND_PRIVIEGE_LEVEL;
+
   case Attribute::EndAttrKinds:
     llvm_unreachable("Can not encode end-attribute kinds marker.");
   case Attribute::None:

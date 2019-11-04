@@ -1546,6 +1546,13 @@ static Attribute::AttrKind getAttrFromCode(uint64_t Code) {
     return Attribute::ImmArg;
   case bitc::ATTR_KIND_SANITIZE_MEMTAG:
     return Attribute::SanitizeMemTag;
+  //LLM: priv track
+  case bitc::ATTR_KIND_PRIVILEGE_DATA:
+    return Attribute::PrivilegeData;
+  case bitc::ATTR_KIND_PRIVILEGE_FUNCTION:
+    return Attribute::PrivilegeFunction;
+  case bitc::ATTR_KIND_PRIVILEGE_LEVEL:
+    return Attribute::PrivilegeLevel;
   }
 }
 

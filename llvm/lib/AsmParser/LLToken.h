@@ -236,6 +236,10 @@ enum Kind {
   kw_writeonly,
   kw_zeroext,
   kw_immarg,
+  //LLM: attributes for privilege tracking
+  kw_privilege_data,
+  kw_privilege_function,
+  kw_privilege_level,
 
   kw_type,
   kw_opaque,

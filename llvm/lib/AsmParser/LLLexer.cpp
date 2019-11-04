@@ -693,6 +693,10 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(writeonly);
   KEYWORD(zeroext);
   KEYWORD(immarg);
+  // LLM: attributes for privilege track
+  KEYWORD(privilege_data);
+  KEYWORD(privilege_function);
+  KEYWORD(privilege_level); 
 
   KEYWORD(type);
   KEYWORD(opaque);
