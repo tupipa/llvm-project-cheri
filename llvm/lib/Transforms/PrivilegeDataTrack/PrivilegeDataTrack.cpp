@@ -151,18 +151,24 @@ bool PrivilegeDataTrack2::runOnFunction(Function &F) {
       }
 
       for (BasicBlock & B: F){
-	 for (Instruction & inst: B){
+	      errs() << "basic block size: " << B.size() << "\n";
+         for (Instruction & inst: B){
 		 errs()<< "instruction" << inst.getOpcodeName() << "\n";
 	 }
       }
       errs() << '\n';
+
+      visit(F);
+
       return false;
 }
 
 // visit load instruction; propagate the attribute from source mem to register operands
-void visitLoadInst(LoadInst & LI){
+void PrivilegeDataTrack2::visitLoadInst(LoadInst & LI){
   // todo
   errs() << "LLM: TODO: visit load instruction here \n";
+  errs() << "Opcode: " << LI.getOpcodeName() << "\n";
+   
 }
 
 
