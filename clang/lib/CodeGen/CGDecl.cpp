@@ -1613,6 +1613,13 @@ CodeGenFunction::EmitAutoVarAlloca(const VarDecl &D) {
   if (D.hasAttr<AnnotateAttr>() && HaveInsertPoint())
     EmitVarAnnotations(&D, address.getPointer());
 
+  if (D.hasAttr<PrivilegeDataAttr>() ){
+	  llvm::errs()<<"LLM: CodeGen/CGDecl.cpp PrivilegeData found\n";
+  }
+  if (D.hasAttr<PrivilegeLevelAttr>()){
+	  llvm::errs()<<"LLM: CodeGen/CGDecl.cpp PrivilegeLevel found\n";  
+  }
+
   // Make sure we call @llvm.lifetime.end.
   if (emission.useLifetimeMarkers())
     EHStack.pushCleanup<CallLifetimeEnd>(NormalEHLifetimeMarker,

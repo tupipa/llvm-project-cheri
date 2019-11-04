@@ -25,6 +25,7 @@ using namespace llvm;
 
 STATISTIC(HelloCounter, "Counts number of functions greeted");
 
+
 namespace {
   // PrivilegeDataTrack - The first implementation, without getAnalysisUsage.
   struct PrivilegeDataTrack : public FunctionPass {
@@ -33,7 +34,7 @@ namespace {
 
     bool runOnFunction(Function &F) override {
       ++HelloCounter;
-      errs() << "PrivilegeDataTrack: ";
+      errs() << "PrivilegeDataTrack00: ";
       errs().write_escaped(F.getName()) << '\n';
       return false;
     }
@@ -58,6 +59,9 @@ static RegisterStandardPasses Z(
     [](const PassManagerBuilder &Builder,
        legacy::PassManagerBase &PM) { PM.add(new PrivilegeDataTrack()); });
 
+
+STATISTIC(HelloCounter2, "Counts number of functions greeted");
+
 namespace {
   // PrivilegeDataTrack2 - The second implementation with getAnalysisUsage implemented, and with attributes 'privileged_data'
   struct PrivilegeDataTrack2 : public FunctionPass {
@@ -65,17 +69,29 @@ namespace {
     PrivilegeDataTrack2() : FunctionPass(ID) {}
 
     bool runOnFunction(Function &F) override {
-      ++HelloCounter;
-      errs() << "PrivilegeDataTrack: ";
+      ++HelloCounter2;
+      errs() << "PrivilegeDataTrack2: ";
       errs().write_escaped(F.getName()) << "\t return type: ";
+
       F.getReturnType()->dump();
       errs() << "\t attribute: ";
-      F.getAttributes().dump();
-     /*
-      for (auto attr: F.getAttributes()){
-          errs().write_escaped(attr.getKindAsString()) << "," ;
-          errs().write_escaped(attr.getValueAsString()) << ";" ;
-      }*/
+
+      // the following is same as F.getAttributes().dump();
+      AttributeList alist = F.getAttributes();
+      errs() << "\t PAL[\n";
+      for (unsigned i = alist.index_begin(), e = alist.index_end(); i != e; ++i){
+         if (alist.getAttributes(i).hasAttributes())
+           errs() << "\t  { " << i << " ==> " << alist.getAsString(i) << " }\n" ;
+      }
+      errs() << "\t ]\n";
+      
+      // get the parameters and print the attributes
+      int arg_num = F.arg_size();
+      for (int i =0 ; i < arg_num; i++){
+	  errs() << "\t AttributeSet of parameter " << i << "\n";
+	  F.getAttributes().getParamAttributes(i).dump();
+      }
+
       errs() << '\n';
       return false;
     }
@@ -106,4 +122,5 @@ static RegisterStandardPasses Z2(
     PassManagerBuilder::EP_EarlyAsPossible,
     [](const PassManagerBuilder &Builder,
        legacy::PassManagerBase &PM) { PM.add(new PrivilegeDataTrack2()); });
+
 

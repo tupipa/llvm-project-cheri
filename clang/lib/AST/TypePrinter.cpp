@@ -1600,6 +1600,16 @@ void TypePrinter::printAttributedAfter(const AttributedType *T,
   case attr::MemoryAddress:
     OS << "memory_address";
     break;
+  // LLM: added to avoid warning
+  case attr::PrivilegeData:
+    OS << "privilege_data";
+    break;
+  case attr::PrivilegeFunction:
+    OS << "privilege_function";
+    break;
+  case attr::PrivilegeLevel:
+    OS << "privilege_level(" << "???" << ")";
+    break;
   }
   OS << "))";
 }
