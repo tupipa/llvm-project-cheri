@@ -733,7 +733,7 @@ static uint64_t getAttrKindEncoding(Attribute::AttrKind Kind) {
   case Attribute::PrivilegeFunction:
     return bitc::ATTR_KIND_PRIVILEGE_FUNCTION;
   case Attribute::PrivilegeLevel:
-    return bitc::ATTR_KIND_PRIVIEGE_LEVEL;
+    return bitc::ATTR_KIND_PRIVILEGE_LEVEL;
 
   case Attribute::EndAttrKinds:
     llvm_unreachable("Can not encode end-attribute kinds marker.");
