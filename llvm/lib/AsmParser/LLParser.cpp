@@ -1326,6 +1326,20 @@ bool LLParser::ParseFnAttributeValuePairs(AttrBuilder &B,
     case lltok::kw_uwtable: B.addAttribute(Attribute::UWTable); break;
     case lltok::kw_willreturn: B.addAttribute(Attribute::WillReturn); break;
     case lltok::kw_writeonly: B.addAttribute(Attribute::WriteOnly); break;
+    // LLM: privilege tracking
+    case lltok::kw_privilege_function: B.addAttribute(Attribute::PrivilegeFunction);break;
+    // LLM: TODO add pri level support
+    // - need to update AttrBuilder class just as alignment attribute
+    case lltok::kw_privilege_level: B.addAttribute(Attribute::PrivilegeLevel);break;
+    //{
+      //unsigned LevelArg;
+      //Optional<unsigned> NumElemsArg;
+      // inAttrGrp doesn't matter; we only support privilege_level(n)
+      //if (parsePrivilegeLevelArguments(LevelArg))
+      //  return true;
+      //B.addPrivilegeLevelAttr(LevelArg);
+      //continue;
+    //}
 
     // Error handling.
     case lltok::kw_inreg:
@@ -1348,6 +1362,8 @@ bool LLParser::ParseFnAttributeValuePairs(AttrBuilder &B,
     case lltok::kw_swifterror:
     case lltok::kw_swiftself:
     case lltok::kw_immarg:
+    // LLM: privilege data is only for variables/parameters, not functions
+    case lltok::kw_privilege_data:
       HaveError |=
         Error(Lex.getLoc(),
               "invalid use of parameter-only attribute on a function");

@@ -518,6 +518,13 @@ public:
   addAllocSizeAttr(LLVMContext &C, unsigned Index, unsigned ElemSizeArg,
                    const Optional<unsigned> &NumElemsArg);
 
+#if 0
+  /// LLM: Add the pri level attribute to the attribute set at the given index.
+  /// Returns a new list because attribute lists are immutable.
+  LLVM_NODISCARD AttributeList
+  addPrivilegeLevelAttr(LLVMContext &C, unsigned Index, unsigned LevelArg);
+#endif 
+
   /// Add the allocsize attribute to the attribute set at the given arg index.
   /// Returns a new list because attribute lists are immutable.
   LLVM_NODISCARD AttributeList
@@ -815,6 +822,9 @@ public:
   /// This turns one (or two) ints into the form used internally in Attribute.
   AttrBuilder &addAllocSizeAttr(unsigned ElemSizeArg,
                                 const Optional<unsigned> &NumElemsArg);
+
+  /// LLM: This turns the pri level into the form used internally in Attribute.
+  AttrBuilder &addPrivilegeLevelAttr(unsigned ElemSizeArg);
 
   /// This turns a byval type into the form used internally in Attribute.
   AttrBuilder &addByValAttr(Type *Ty);

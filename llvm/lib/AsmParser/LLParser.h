@@ -294,6 +294,9 @@ namespace llvm {
     bool ParseOptionalCommaInAlloca(bool &IsInAlloca);
     bool parseAllocSizeArguments(unsigned &BaseSizeArg,
                                  Optional<unsigned> &HowManyArg);
+    // LLM: parse the pri level
+    bool parsePrivilegeLevelArgument(unsigned &LevelArg);
+
     bool ParseIndexList(SmallVectorImpl<unsigned> &Indices,
                         bool &AteExtraComma);
     bool ParseIndexList(SmallVectorImpl<unsigned> &Indices) {
