@@ -1576,7 +1576,8 @@ static bool isFuncOnlyAttr(Attribute::AttrKind Kind) {
 /// arguments.
 static bool isFuncOrArgAttr(Attribute::AttrKind Kind) {
   return Kind == Attribute::ReadOnly || Kind == Attribute::WriteOnly ||
-         Kind == Attribute::ReadNone;
+         Kind == Attribute::ReadNone || 
+	 Kind == Attribute::PrivilegeLevel;
 }
 
 void Verifier::verifyAttributeTypes(AttributeSet Attrs, bool IsFunction,
@@ -1607,6 +1608,9 @@ void Verifier::verifyParameterAttrs(AttributeSet Attrs, Type *Ty,
                                     const Value *V) {
   if (!Attrs.hasAttributes())
     return;
+
+  errs()<< "LLM: --- Verify Parameter Attrs: \n" ;
+  Attrs.dump();
 
   verifyAttributeTypes(Attrs, /*IsFunction=*/false, V);
 
