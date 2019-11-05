@@ -1766,6 +1766,28 @@ void CodeGenModule::SetCommonAttributes(GlobalDecl GD, llvm::GlobalValue *GV) {
         VD->getStorageDuration() == SD_Static)
       addUsedGlobal(GV);
   }
+  // LLM: add priv attribute to global
+  // cite: in this file: setNonAliasAttributes(...)
+  if (D){
+    if (llvm::GlobalVariable *GVar= dyn_cast<llvm::GlobalVariable>(GV)){
+       if (auto *PAttr = D->getAttr<PrivilegeDataAttr>()){
+	 llvm::errs() << "LLM: " << __FILE__ << ": "
+		 << __FUNCTION__ << "attr: privilege_data found !!!\n\t"
+		 "added from GlobalDecl to GlobalVaribale\n"; 
+         GVar->addAttribute("privilege_data");
+       }
+
+#if 0       
+       if ( auto *PAttr = D->getAttr<PrivilegeLevelAttr>()){
+         llvm::errs() << "LLM: " << __FILE__ << ": "
+		 << __FUNCTION__ << "attr: privilege_level is \n"
+        	 << PAttr->getName() << "\n";
+         GVar->addAttribute("privilege-level", PAttr->getName());
+       } 
+#endif
+
+    }
+  }
 }
 
 bool CodeGenModule::GetCPUAndFeaturesAttributes(GlobalDecl GD,
@@ -2529,6 +2551,10 @@ ConstantAddress CodeGenModule::GetWeakRefReference(const ValueDecl *VD) {
 void CodeGenModule::EmitGlobal(GlobalDecl GD) {
   const auto *Global = cast<ValueDecl>(GD.getDecl());
 
+  if (Global->hasAttr<PrivilegeDataAttr>()){
+	  llvm::errs() << "LLM: " << __FILE__ << ":"
+		  << __FUNCTION__ <<  "found privilege_data; but how to emit it? \n" ;
+  }
   // Weak references don't produce any output by themselves.
   if (Global->hasAttr<WeakRefAttr>())
     return;
