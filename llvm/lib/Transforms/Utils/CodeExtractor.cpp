@@ -859,6 +859,10 @@ Function *CodeExtractor::constructFunction(const ValueSet &inputs,
       case Attribute::StrictFP:
       case Attribute::UWTable:
       case Attribute::NoCfCheck:
+      // LLM: privilege track attribute should be propagated
+      case Attribute::PrivilegeData:
+      case Attribute::PrivilegeFunction:
+      case Attribute::PrivilegeLevel:
         break;
       }
 
