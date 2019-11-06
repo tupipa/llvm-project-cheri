@@ -1777,14 +1777,12 @@ void CodeGenModule::SetCommonAttributes(GlobalDecl GD, llvm::GlobalValue *GV) {
          GVar->addAttribute("privilege_data");
        }
 
-#if 0       
        if ( auto *PAttr = D->getAttr<PrivilegeLevelAttr>()){
          llvm::errs() << "LLM: " << __FILE__ << ": "
 		 << __FUNCTION__ << "attr: privilege_level is \n"
-        	 << PAttr->getName() << "\n";
-         GVar->addAttribute("privilege-level", PAttr->getName());
+        	 << PAttr->getPrivilegeLevel() << "\n";
+         GVar->addAttribute("privilege-level", std::to_string(PAttr->getPrivilegeLevel()));
        } 
-#endif
 
     }
   }
