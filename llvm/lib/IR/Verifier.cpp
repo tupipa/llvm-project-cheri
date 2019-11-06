@@ -1609,8 +1609,11 @@ void Verifier::verifyParameterAttrs(AttributeSet Attrs, Type *Ty,
   if (!Attrs.hasAttributes())
     return;
 
-  errs()<< "LLM: --- Verify Parameter Attrs: \n" ;
+#if 0
+  errs()<< "LLM: " << __FILE__ << ": " 
+	  <<  __FUNCTION__ << ": Verify Parameter Attrs: \n" ;
   Attrs.dump();
+#endif 
 
   verifyAttributeTypes(Attrs, /*IsFunction=*/false, V);
 
