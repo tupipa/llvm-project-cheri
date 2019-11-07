@@ -153,7 +153,7 @@ bool PrivilegeDataTrack2::runOnFunction(Function &F) {
       for (BasicBlock & B: F){
 	      errs() << "basic block size: " << B.size() << "\n";
          for (Instruction & inst: B){
-		 errs()<< "instruction" << inst.getOpcodeName() << "\n";
+		 errs()<< "\tinstruction: " << inst.getOpcodeName() << "\n";
 	 }
       }
       errs() << '\n';
@@ -186,7 +186,8 @@ Y("privilegeDataTrack2", "PrivilegeDataTrack2 for privilege data tracking",
 */
 
 static RegisterStandardPasses Z2(
-    PassManagerBuilder::EP_EarlyAsPossible,
+//    PassManagerBuilder::EP_EarlyAsPossible,
+    PassManagerBuilder::EP_ModuleOptimizerEarly,
     [](const PassManagerBuilder &Builder,
        legacy::PassManagerBase &PM) { PM.add(new PrivilegeDataTrack2()); });
 
