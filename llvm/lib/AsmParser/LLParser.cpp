@@ -1331,15 +1331,18 @@ bool LLParser::ParseFnAttributeValuePairs(AttrBuilder &B,
     // LLM: TODO add pri level support
     // - need to update AttrBuilder class just as alignment attribute
     case lltok::kw_privilege_level: B.addAttribute(Attribute::PrivilegeLevel);break;
-    //{
+    {
       //unsigned LevelArg;
       //Optional<unsigned> NumElemsArg;
       // inAttrGrp doesn't matter; we only support privilege_level(n)
       //if (parsePrivilegeLevelArguments(LevelArg))
       //  return true;
       //B.addPrivilegeLevelAttr(LevelArg);
-      //continue;
-    //}
+      errs() << "LLM: " << __FILE__ << ":" << __FUNCTION__ 
+	      << ": TODO: read priv level from bit code\n" ;
+
+      continue;
+    }
 
     // Error handling.
     case lltok::kw_inreg:
@@ -1672,6 +1675,13 @@ bool LLParser::ParseOptionalParamAttrs(AttrBuilder &B) {
     case lltok::kw_writeonly:       B.addAttribute(Attribute::WriteOnly); break;
     case lltok::kw_zeroext:         B.addAttribute(Attribute::ZExt); break;
     case lltok::kw_immarg:          B.addAttribute(Attribute::ImmArg); break;
+    case lltok::kw_privilege_data:  B.addAttribute(Attribute::PrivilegeData); break;
+    case lltok::kw_privilege_level: {
+      errs() << "LLM: "<< __FILE__ << ":" << __FUNCTION__
+	      << ": TODO: parse priv level from bitcode\n";
+      continue;
+    }
+
 
     case lltok::kw_alignstack:
     case lltok::kw_alwaysinline:

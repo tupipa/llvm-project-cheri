@@ -445,6 +445,15 @@ void CodeGenFunction::EmitStaticVarDecl(const VarDecl &D,
   if (D.hasAttr<UsedAttr>())
     CGM.addUsedGlobal(var);
 
+  // LLM: add privilege_data attribute
+  if (auto *PA = D.getAttr<PrivilegeDataAttr>()){
+    llvm::errs() << "LLM: " << __FILE__ << ":"
+	    << __FUNCTION__ << ": found priv data attr on "
+	    << D.getName() << "\n";
+    
+    // LLM: not reached here.
+    //var->addAttribute("privilege-data", PA->getAsString());
+  }
   // We may have to cast the constant because of the initializer
   // mismatch above.
   //
@@ -1614,10 +1623,14 @@ CodeGenFunction::EmitAutoVarAlloca(const VarDecl &D) {
     EmitVarAnnotations(&D, address.getPointer());
 
   if (D.hasAttr<PrivilegeDataAttr>() ){
-	  llvm::errs()<<"LLM: CodeGen/CGDecl.cpp PrivilegeData found\n";
+	llvm::errs() << "LLM: " << __FILE__ << ":"
+	       << __FUNCTION__ << ": found priv data attr on "
+	       << D.getName() << "\n";
   }
   if (D.hasAttr<PrivilegeLevelAttr>()){
-	  llvm::errs()<<"LLM: CodeGen/CGDecl.cpp PrivilegeLevel found\n";  
+	llvm::errs() << "LLM: " << __FILE__ << ":"
+	       << __FUNCTION__ << ": found priv Level attr on "
+	       << D.getName() << "\n";  
   }
 
   // Make sure we call @llvm.lifetime.end.
@@ -2558,6 +2571,14 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, ParamValue Arg,
   if (D.hasAttr<AnnotateAttr>())
     EmitVarAnnotations(&D, DeclPtr.getPointer());
 
+  if (D.hasAttr<PrivilegeDataAttr>()){
+    llvm::errs() << "LLM: " << __FILE__ << ": " 
+	    << __FUNCTION__ << ": priv_data for para: " 
+	    << D.getName() << "; attr added\n";
+    llvm::Argument *LLVMArg = dyn_cast<llvm::Argument>(Arg.getAnyValue());
+    LLVMArg->addAttr(llvm::Attribute::PrivilegeData);
+
+  }
   // We can only check return value nullability if all arguments to the
   // function satisfy their nullability preconditions. This makes it necessary
   // to emit null checks for args in the function body itself.
