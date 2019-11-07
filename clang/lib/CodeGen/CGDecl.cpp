@@ -448,11 +448,10 @@ void CodeGenFunction::EmitStaticVarDecl(const VarDecl &D,
   // LLM: add privilege_data attribute
   if (auto *PA = D.getAttr<PrivilegeDataAttr>()){
     llvm::errs() << "LLM: " << __FILE__ << ":"
-	    << __FUNCTION__ << ": found priv data attr on "
-	    << D.getName() << "\n";
+	    << __FUNCTION__ << ": found priv data attr on static var: "
+	    << D.getName() << ". Added to llvm::GlobalVariable\n";
     
-    // LLM: not reached here.
-    //var->addAttribute("privilege-data", PA->getAsString());
+    var->addAttribute(llvm::Attribute::PrivilegeData);
   }
   // We may have to cast the constant because of the initializer
   // mismatch above.
@@ -1624,12 +1623,12 @@ CodeGenFunction::EmitAutoVarAlloca(const VarDecl &D) {
 
   if (D.hasAttr<PrivilegeDataAttr>() ){
 	llvm::errs() << "LLM: " << __FILE__ << ":"
-	       << __FUNCTION__ << ": found priv data attr on "
+	       << __FUNCTION__ << ": found priv data attr on local var: "
 	       << D.getName() << "\n";
   }
   if (D.hasAttr<PrivilegeLevelAttr>()){
 	llvm::errs() << "LLM: " << __FILE__ << ":"
-	       << __FUNCTION__ << ": found priv Level attr on "
+	       << __FUNCTION__ << ": found priv Level attr on local var:"
 	       << D.getName() << "\n";  
   }
 
@@ -2572,9 +2571,11 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, ParamValue Arg,
     EmitVarAnnotations(&D, DeclPtr.getPointer());
 
   if (D.hasAttr<PrivilegeDataAttr>()){
+#if 0
     llvm::errs() << "LLM: " << __FILE__ << ": " 
 	    << __FUNCTION__ << ": priv_data for para: " 
 	    << D.getName() << "; attr added\n";
+#endif
     llvm::Argument *LLVMArg = dyn_cast<llvm::Argument>(Arg.getAnyValue());
     LLVMArg->addAttr(llvm::Attribute::PrivilegeData);
 

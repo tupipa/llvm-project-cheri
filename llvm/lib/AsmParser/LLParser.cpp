@@ -1328,6 +1328,13 @@ bool LLParser::ParseFnAttributeValuePairs(AttrBuilder &B,
     case lltok::kw_writeonly: B.addAttribute(Attribute::WriteOnly); break;
     // LLM: privilege tracking
     case lltok::kw_privilege_function: B.addAttribute(Attribute::PrivilegeFunction);break;
+    // LLM: privilege data is parsed here at ParseFnAttributeValuePaires
+    //  In principle, it does not make sense to be parsed here; 
+    //  However, due to ParseUnamedAttrGrp() only calls here to parse all unamed attr groups
+    //  even for the attr groups that are not for functions (such as static local variables)
+    // Therefore, to get around of the error where some attr groups (e.g. for static locals)
+    // did not get parsed by ParseUnamedAttrGrp(); we parse it here for convenience.
+    case lltok::kw_privilege_data: B.addAttribute(Attribute::PrivilegeData);break;
     // LLM: TODO add pri level support
     // - need to update AttrBuilder class just as alignment attribute
     case lltok::kw_privilege_level: B.addAttribute(Attribute::PrivilegeLevel);break;
@@ -1366,7 +1373,7 @@ bool LLParser::ParseFnAttributeValuePairs(AttrBuilder &B,
     case lltok::kw_swiftself:
     case lltok::kw_immarg:
     // LLM: privilege data is only for variables/parameters, not functions
-    case lltok::kw_privilege_data:
+    //case lltok::kw_privilege_data:
       HaveError |=
         Error(Lex.getLoc(),
               "invalid use of parameter-only attribute on a function");
@@ -1718,6 +1725,7 @@ bool LLParser::ParseOptionalParamAttrs(AttrBuilder &B) {
     case lltok::kw_shadowcallstack:
     case lltok::kw_strictfp:
     case lltok::kw_uwtable:
+    case lltok::kw_privilege_function:
       HaveError |= Error(Lex.getLoc(), "invalid use of function-only attribute");
       break;
     }
@@ -1768,6 +1776,13 @@ bool LLParser::ParseOptionalReturnAttrs(AttrBuilder &B) {
     case lltok::kw_nonnull:         B.addAttribute(Attribute::NonNull); break;
     case lltok::kw_signext:         B.addAttribute(Attribute::SExt); break;
     case lltok::kw_zeroext:         B.addAttribute(Attribute::ZExt); break;
+    case lltok::kw_privilege_data:  B.addAttribute(Attribute::PrivilegeData); break;
+    case lltok::kw_privilege_level: {
+      errs() << "LLM: "<< __FILE__ << ":" << __FUNCTION__
+              << ": TODO: parse priv level from bitcode\n";
+      continue;
+    }
+
 
     // Error handling.
     case lltok::kw_byval:
@@ -1818,6 +1833,7 @@ bool LLParser::ParseOptionalReturnAttrs(AttrBuilder &B) {
     case lltok::kw_shadowcallstack:
     case lltok::kw_strictfp:
     case lltok::kw_uwtable:
+    case lltok::kw_privilege_function:
       HaveError |= Error(Lex.getLoc(), "invalid use of function-only attribute");
       break;
 
