@@ -1771,7 +1771,7 @@ void CodeGenModule::SetCommonAttributes(GlobalDecl GD, llvm::GlobalValue *GV) {
   if (D){
     if (llvm::GlobalVariable *GVar= dyn_cast<llvm::GlobalVariable>(GV)){
        if (auto *PAttr = D->getAttr<PrivilegeDataAttr>()){
-#if 0
+#if 1
           llvm::errs() << "LLM: " << __FILE__ << ": "
 		 << __FUNCTION__ << "attr: privilege_data found !!!\n\t"
 		 "added from GlobalDecl to GlobalVaribale\n"; 
@@ -1780,7 +1780,7 @@ void CodeGenModule::SetCommonAttributes(GlobalDecl GD, llvm::GlobalValue *GV) {
        }
 
        if ( auto *PAttr = D->getAttr<PrivilegeLevelAttr>()){
-#if 0
+#if 1
           llvm::errs() << "LLM: " << __FILE__ << ": "
 		 << __FUNCTION__ << "attr: privilege_level is \n"
         	 << PAttr->getPrivilegeLevel() << "\n";
