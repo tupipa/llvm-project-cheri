@@ -2580,6 +2580,20 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, ParamValue Arg,
     LLVMArg->addAttr(llvm::Attribute::PrivilegeData);
 
   }
+
+  if (auto * attr = D.getAttr<PrivilegeLevelAttr>()){
+#if 1
+    llvm::errs() << "LLM: " << __FILE__ << ": "
+            << __FUNCTION__ << ": priv_level for para: "
+            << D.getName() << "; attr added\n";
+#endif
+    llvm::AttrBuilder PAttrs;
+    PAttrs.addAttribute("privilege_level", std::to_string(attr->getPrivilegeLevel()) );
+    llvm::Argument *LLVMArg = dyn_cast<llvm::Argument>(Arg.getAnyValue());
+    LLVMArg->addAttrs(PAttrs);
+
+  }
+
   // We can only check return value nullability if all arguments to the
   // function satisfy their nullability preconditions. This makes it necessary
   // to emit null checks for args in the function body itself.
